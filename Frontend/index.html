@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Intelligent Document Processing System</title>
+    <style>
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    background: #f0f4f8;
+    padding: 30px;
+  }
+
+  h2 {
+    color: #1e3a8a;
+    margin-bottom: 20px;
+  }
+
+  label {
+    font-weight: 600;
+    color: #374151;
+  }
+
+  input[type="file"],
+  input[type="text"] {
+    width: 60%;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+  }
+
+  button {
+    margin-top: 12px;
+    padding: 8px 18px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #1d4ed8;
+  }
+
+  #result {
+    margin-top: 25px;
+    padding: 18px;
+    background: #ffffff;
+    border-left: 6px solid #2563eb;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    line-height: 1.6;
+    color: #111827;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  #result strong {
+    color: #2563eb;
+  }
+</style>
+</head>
+<body>
+
+<h2>Intelligent Document Processing System</h2>
+
+<label><b>Select document :</b></label><br>
+<input type="file" id="file" accept=".pdf,.txt"><br><br>
+
+<label><b>Enter your query:</b></label><br>
+<input type="text" id="query" size="80" placeholder="Ask something about the document"><br><br>
+
+<button onclick="sendData()">Submit</button>
+
+<pre id="result">Waiting for input...</pre>
+
+<script>
+function sendData() {
+  const file = document.getElementById("file").files[0];
+  const query = document.getElementById("query").value;
+  const output = document.getElementById("result");
+
+  output.innerHTML = "Processing...";
+
+  if (!file || !query) {
+    output.innerText = "File and query required";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function () {
+    const base64File = reader.result.split(",")[1];
+
+    fetch("https:<api invoke>amazonaws.com/dev/query", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        filename: file.name,
+        query: query,
+        filecontent: base64File
+      })
+    })
+    .then(res => res.json())
+    .then(result => {
+
+      // ✅ IMPORTANT: REST API FIX
+      const data = result.body
+        ? JSON.parse(result.body)
+        : result;
+
+      output.innerHTML = "<strong>Answer:</strong><br><br>";
+
+      if (!data.answer) {
+        output.innerText = "Backend responded but no answer field found.";
+        return;
+      }
+
+      if (Array.isArray(data.answer)) {
+        data.answer.forEach(line => {
+          const p = document.createElement("p");
+          p.textContent = line;
+          output.appendChild(p);
+        });
+      } else {
+        output.textContent += data.answer;
+      }
+    })
+    .catch(err => {
+      output.innerText = "Frontend error: " + err;
+    });
+  };
+
+  reader.readAsDataURL(file);
+}
+</script>
+</body>
+</html>
