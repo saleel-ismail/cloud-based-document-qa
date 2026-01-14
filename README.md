@@ -139,5 +139,3 @@ Suitable for:
 
 ## 👤 Author
 ISMAIL SALEEL
-
-Ismail Saleel
